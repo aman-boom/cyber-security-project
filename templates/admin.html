@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Admin Panel</title>
+
+<style>
+
+body{
+background:#020617;
+color:#00ffcc;
+font-family:monospace;
+padding:20px;
+}
+
+.card{
+background:black;
+padding:20px;
+border:1px solid #00ffcc;
+margin-top:20px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+}
+
+td,th{
+border:1px solid #00ffcc;
+padding:10px;
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>👨‍💼 SOC Admin Panel</h1>
+
+<div class="card">
+
+<h2>Users</h2>
+
+<table>
+
+<tr>
+<th>Username</th>
+<th>Role</th>
+</tr>
+
+{% for user in users %}
+
+<tr>
+<td>{{ user[0] }}</td>
+<td>{{ user[1] }}</td>
+</tr>
+
+{% endfor %}
+
+</table>
+
+</div>
+
+<div class="card">
+
+<h2>Activity Logs</h2>
+
+{% for log in logs %}
+
+<p>
+{{ log[2] }} —
+{{ log[0] }} —
+{{ log[1] }}
+</p>
+
+{% endfor %}
+
+</div>
+
+<div class="card">
+
+<h2>Threat Logs</h2>
+
+{% for threat in threats %}
+
+<p>
+{{ threat[3] }} —
+{{ threat[0] }} —
+{{ threat[1] }} —
+{{ threat[2] }}
+</p>
+
+{% endfor %}
+
+</div>
+
+</body>
+</html>

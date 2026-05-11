@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Cyber Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body{
+    margin:0;
+    font-family:monospace;
+    background:#020617;
+    color:#00ffcc;
+}
+
+.header{
+    text-align:center;
+    padding:20px;
+    border-bottom:1px solid #00ffcc;
+}
+
+.container{
+    max-width:1300px;
+    margin:auto;
+    padding:20px;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:20px;
+}
+
+.card{
+    background:black;
+    border:1px solid #00ffcc;
+    padding:20px;
+    border-radius:10px;
+    box-shadow:0 0 10px #00ffcc;
+}
+
+input{
+    width:95%;
+    padding:10px;
+    margin-top:10px;
+    background:black;
+    color:#00ffcc;
+    border:1px solid #00ffcc;
+}
+
+button{
+    width:100%;
+    padding:10px;
+    margin-top:10px;
+    background:black;
+    color:#00ffcc;
+    border:1px solid #00ffcc;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#00ffcc;
+    color:black;
+}
+
+#globalAlert{
+    display:none;
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    background:red;
+    color:white;
+    padding:25px;
+    font-size:20px;
+    z-index:9999;
+    border-radius:10px;
+}
+
+.attack-line{
+    position:fixed;
+    width:100%;
+    height:2px;
+    background:red;
+    animation:attackMove 1s linear infinite;
+}
+
+@keyframes attackMove{
+    from{transform:translateX(-100%);}
+    to{transform:translateX(100%);}
+}
+
+#accessScreen{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:black;
+    color:#00ffcc;
+    z-index:999999;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
+    animation:fadeOut 1s ease forwards;
+    animation-delay:3s;
+}
+
+#accessScreen h1{
+    font-size:70px;
+    text-shadow:0 0 20px #00ffcc;
+}
+
+@keyframes fadeOut{
+    to{
+        opacity:0;
+        visibility:hidden;
+    }
+}
+
+#terminalPanel{
+    background:#000;
+    height:250px;
+    overflow:auto;
+    padding:10px;
+    border:1px solid #00ffcc;
+    font-size:13px;
+}
+
+#threatFeed{
+    height:250px;
+    overflow:auto;
+}
+
+.status-good{
+    color:lime;
+}
+
+.status-warning{
+    color:orange;
+}
+
+.status-danger{
+    color:red;
+}
+</style>
+</head>
+
+<body>
+
+<!-- ACCESS -->
+<div id="accessScreen">
+
+<h1>ACCESS GRANTED</h1>
+
+<p>🔓 AUTHORIZATION SUCCESSFUL</p>
+
+<p>WELCOME {{ session.get("user") }}</p>
+
+</div>
+
+<!-- ALERT -->
+<div id="globalAlert">
+🚨 SUSPICIOUS ACTIVITY DETECTED
+</div>
+
+<!-- HEADER -->
+<div class="header">
+<h1 id="typingTitle"></h1>
+</div>
+
+<div class="container">
+
+<!-- STATUS -->
+<div class="grid">
+
+<div class="card">
+
+<h3>🧠 System Monitoring</h3>
+
+<p>Status:
+<span class="status-good">ACTIVE</span>
+</p>
+
+<p>User:
+{{ session.get("user") }}
+</p>
+
+<p>Time:
+<span id="time"></span>
+</p>
+
+<p>Firewall:
+<span class="status-good">ENABLED</span>
+</p>
+
+<a href="/logout">
+<button>Logout</button>
+</a>
+
+</div>
+
+<div class="card">
+
+<h3>📡 Live Monitoring</h3>
+
+<p>Active Attacks:
+<span id="liveAttacks">0</span>
+</p>
+
+<p>Packets/sec:
+<span id="packets">0</span>
+</p>
+
+<p>System Load:
+<span id="load">0%</span>
+</p>
+
+<p>Threat Level:
+<span class="status-warning">
+MEDIUM
+</span>
+</p>
+
+</div>
+
+</div>
+
+<!-- MODULES -->
+<div class="grid">
+
+<div class="card">
+
+<h3>🌐 Network Scan</h3>
+
+<form action="/network" method="POST">
+
+<input name="ip"
+placeholder="Enter IP"
+required>
+
+<button>Scan</button>
+
+</form>
+
+</div>
+
+<div class="card">
+
+<h3>📦 Packet Analysis</h3>
+
+<form action="/packet"
+method="POST"
+enctype="multipart/form-data">
+
+<input name="packet"
+placeholder="Enter Packet">
+
+<input type="file" name="file">
+
+<button>Analyze</button>
+
+</form>
+
+</div>
+
+<div class="card">
+
+<h3>🧠 Threat Detection</h3>
+
+<form action="/threat" method="POST">
+
+<input name="url"
+placeholder="Enter URL"
+required>
+
+<button>Check</button>
+
+</form>
+
+</div>
+
+<div class="card">
+
+<h3>📜 Log Analysis</h3>
+
+<form action="/log"
+method="POST"
+enctype="multipart/form-data">
+
+<input type="file"
+name="logfile"
+required>
+
+<button>Upload</button>
+
+</form>
+
+</div>
+
+<div class="card">
+
+<h3>📡 Live Packet</h3>
+
+<a href="/live">
+<button>Start Capture</button>
+</a>
+
+</div>
+
+</div>
+
+<!-- SOC CONTROL ROOM -->
+<div class="card" style="margin-top:20px;">
+
+<h2>🛰 SOC CONTROL ROOM</h2>
+
+<div class="grid">
+
+<div class="card">
+
+<h3>💻 Real-Time Terminal</h3>
+
+<div id="terminalPanel"></div>
+
+</div>
+
+<div class="card">
+
+<h3>🚨 Threat Intelligence Feed</h3>
+
+<div id="threatFeed">
+
+<p>🟢 Monitoring active...</p>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<h3>📊 System Status</h3>
+
+<p>Firewall:
+<span class="status-good">ACTIVE</span>
+</p>
+
+<p>IDS:
+<span class="status-good">RUNNING</span>
+</p>
+
+<p>Database:
+<span class="status-good">CONNECTED</span>
+</p>
+
+<p>Threat Level:
+<span class="status-warning">MEDIUM</span>
+</p>
+
+</div>
+
+<div class="card">
+
+<h3>👨‍💼 Active Sessions</h3>
+
+<p>Current User:
+{{ session.get("user") }}
+</p>
+
+<p>Admin Access:
+GRANTED
+</p>
+
+<p>Live Sessions:
+1
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- ATTACK SIMULATION -->
+<div class="card" style="margin-top:20px;">
+
+<h2>🧪 Attack Simulation Lab</h2>
+
+<div class="grid">
+
+<a href="/simulate/sql">
+<button>SQL Injection</button>
+</a>
+
+<a href="/simulate/xss">
+<button>XSS Attack</button>
+</a>
+
+<a href="/simulate/ddos">
+<button>DDoS Attack</button>
+</a>
+
+<a href="/simulate/bruteforce">
+<button>Brute Force</button>
+</a>
+
+</div>
+
+</div>
+
+<!-- TRAFFIC -->
+<div class="card" style="margin-top:20px;">
+
+<h2>📡 Live Traffic Visualizer</h2>
+
+<canvas id="trafficChart"></canvas>
+
+</div>
+
+<!-- AI -->
+<div class="card" style="margin-top:20px;">
+
+<h2>🧠 AI Security Assistant</h2>
+
+<p id="aiText">
+Loading AI recommendation...
+</p>
+
+</div>
+
+<!-- SOC ANALYTICS -->
+<div class="card" style="margin-top:20px;">
+
+<h2>📈 SOC Analytics</h2>
+
+<div class="grid">
+
+<div class="card">
+
+<h3>Threat Activity</h3>
+
+<canvas id="socChart1"></canvas>
+
+</div>
+
+<div class="card">
+
+<h3>Network Load</h3>
+
+<canvas id="socChart2"></canvas>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- GLOBAL MAP -->
+<div class="card" style="margin-top:20px;">
+
+<h2>🌍 Global Cyber Attack Map</h2>
+
+<iframe
+src="https://cybermap.kaspersky.com/en/widget/dynamic/dark"
+width="100%"
+height="500"
+style="border:none;">
+</iframe>
+
+</div>
+
+</div>
+
+<!-- CLOCK -->
+<script>
+setInterval(()=>{
+document.getElementById("time").innerText =
+new Date().toLocaleTimeString();
+},1000);
+</script>
+
+<!-- LIVE -->
+<script>
+
+let attacks=0;
+
+function updateLive(){
+
+attacks += Math.floor(Math.random()*2);
+
+document.getElementById("liveAttacks").innerText =
+attacks;
+
+document.getElementById("packets").innerText =
+Math.floor(Math.random()*500);
+
+document.getElementById("load").innerText =
+Math.floor(Math.random()*100)+"%";
+
+}
+
+setInterval(updateLive,1000);
+
+</script>
+
+<!-- TITLE -->
+<script>
+
+let text =
+"CYBER DEFENSE COMMAND CENTER";
+
+let i=0;
+
+function type(){
+
+if(i<text.length){
+
+document.getElementById("typingTitle")
+.innerHTML += text.charAt(i);
+
+i++;
+
+setTimeout(type,50);
+
+}}
+
+type();
+
+</script>
+
+<!-- TERMINAL -->
+<script>
+
+let terminalLogs=[
+
+"[INFO] Monitoring engine started...",
+"[INFO] Firewall active...",
+"[WARNING] Suspicious packet detected...",
+"[INFO] AI threat engine active...",
+"[ALERT] SQL Injection blocked...",
+"[INFO] SOC systems operational..."
+
+];
+
+let terminalIndex=0;
+
+function addTerminalLog(){
+
+let panel =
+document.getElementById("terminalPanel");
+
+if(terminalIndex < terminalLogs.length){
+
+let line =
+document.createElement("p");
+
+line.innerHTML =
+terminalLogs[terminalIndex];
+
+panel.appendChild(line);
+
+panel.scrollTop =
+panel.scrollHeight;
+
+terminalIndex++;
+
+}else{
+
+terminalIndex=0;
+panel.innerHTML="";
+
+}
+
+}
+
+setInterval(addTerminalLog,2000);
+
+</script>
+
+<!-- THREAT FEED -->
+<script>
+
+let threats=[
+
+"🔴 SQL Injection Attempt",
+"🟠 Suspicious Login",
+"🔴 Port Scan",
+"🟡 Traffic Spike",
+"🟠 Brute Force Attempt"
+
+];
+
+function addThreat(){
+
+let feed =
+document.getElementById("threatFeed");
+
+let item =
+document.createElement("p");
+
+item.innerHTML =
+threats[
+Math.floor(Math.random()*threats.length)
+];
+
+feed.prepend(item);
+
+if(feed.children.length>10){
+
+feed.removeChild(feed.lastChild);
+
+}
+
+}
+
+setInterval(addThreat,3000);
+
+</script>
+
+<!-- AI -->
+<script>
+
+fetch("/ai_assistant")
+.then(r=>r.json())
+.then(data=>{
+
+document.getElementById("aiText")
+.innerHTML =
+data.recommendation;
+
+});
+
+</script>
+
+<!-- ATTACK -->
+<script>
+
+function simulateAttack(){
+
+let line =
+document.createElement("div");
+
+line.className="attack-line";
+
+document.body.appendChild(line);
+
+setTimeout(()=>{
+line.remove();
+},1000);
+
+}
+
+setInterval(simulateAttack,6000);
+
+</script>
+
+<!-- CHARTS -->
+<script>
+
+new Chart(
+document.getElementById("socChart1"),
+{
+type:"line",
+data:{
+labels:["1","2","3","4","5"],
+datasets:[{
+label:"Threats",
+data:[2,5,3,7,4],
+borderColor:"#00ffcc",
+backgroundColor:"rgba(0,255,204,0.2)"
+}]
+}
+}
+);
+
+new Chart(
+document.getElementById("socChart2"),
+{
+type:"bar",
+data:{
+labels:["TCP","UDP","HTTP","DNS"],
+datasets:[{
+label:"Traffic",
+data:[12,19,8,15],
+backgroundColor:"#00ffcc"
+}]
+}
+}
+);
+
+new Chart(
+document.getElementById("trafficChart"),
+{
+type:"line",
+data:{
+labels:["1","2","3","4","5","6"],
+datasets:[{
+label:"Traffic",
+data:[120,190,300,500,200,450],
+borderColor:"#00ffcc",
+backgroundColor:"rgba(0,255,204,0.2)"
+}]
+}
+}
+);
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Cyber Analysis Result</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body{
+    margin:0;
+    font-family:monospace;
+    background:#020617;
+    color:#00ffcc;
+}
+
+/* HEADER */
+.header{
+    text-align:center;
+    padding:20px;
+    border-bottom:1px solid #00ffcc;
+}
+
+/* CONTAINER */
+.container{
+    width:90%;
+    margin:auto;
+    padding:20px;
+}
+
+/* CARD */
+.card{
+    background:black;
+    border:1px solid #00ffcc;
+    padding:20px;
+    margin-top:20px;
+    border-radius:10px;
+    box-shadow:0 0 15px #00ffcc;
+}
+
+/* GRID */
+.grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:20px;
+}
+
+/* RESULT */
+.result-box{
+    background:#000;
+    border:1px solid #00ffcc;
+    padding:15px;
+    margin-top:10px;
+    max-height:300px;
+    overflow:auto;
+}
+
+/* ALERT */
+#alertBox{
+    display:none;
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    background:red;
+    color:white;
+    padding:25px;
+    font-size:24px;
+    z-index:9999;
+    border-radius:10px;
+    box-shadow:0 0 20px red;
+}
+
+/* RISK BAR */
+.risk-container{
+    width:100%;
+    background:#111;
+    height:25px;
+    border-radius:10px;
+    overflow:hidden;
+}
+
+.risk-bar{
+    height:25px;
+    width:0%;
+    transition:1s;
+}
+
+/* BUTTON */
+button{
+    background:black;
+    color:#00ffcc;
+    border:1px solid #00ffcc;
+    padding:10px;
+    width:100%;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#00ffcc;
+    color:black;
+}
+
+/* THREAT PANEL */
+#threatDetails{
+    display:none;
+    margin-top:20px;
+    padding:15px;
+    border:1px solid red;
+    background:#111;
+}
+
+.severity-high{
+    color:red;
+}
+
+.severity-medium{
+    color:orange;
+}
+
+.severity-low{
+    color:lime;
+}
+</style>
+</head>
+
+<body>
+
+<!-- ALERT -->
+<div id="alertBox">
+⚠ Suspicious Activity Detected
+</div>
+
+<div class="header">
+<h1>{{ title }}</h1>
+</div>
+
+<div class="container">
+
+<!-- SUMMARY -->
+<div class="grid">
+
+<div class="card">
+
+<h2>📊 Analysis Summary</h2>
+
+<p>Open Ports:
+{{ summary["Open Ports"] }}
+</p>
+
+<p>Closed Ports:
+{{ summary["Closed Ports"] }}
+</p>
+
+<p>Total Alerts:
+{{ summary["Total Alerts"] }}
+</p>
+
+<p>Risk Level:
+{{ summary["Risk"] }}
+</p>
+
+</div>
+
+<div class="card">
+
+<h2>🧠 AI Threat Prediction</h2>
+
+<h3 id="riskLevel">
+Analyzing...
+</h3>
+
+<div class="risk-container">
+<div class="risk-bar" id="riskBar"></div>
+</div>
+
+<h2 id="riskPercent">
+0%
+</h2>
+
+<p id="recommendation">
+Running AI threat analysis...
+</p>
+
+</div>
+
+</div>
+
+<!-- RESULT DATA -->
+<div class="card">
+
+<h2>📋 Detailed Analysis Result</h2>
+
+<div class="result-box">
+
+{% if data is mapping %}
+
+{% for key,value in data.items() %}
+
+<p>
+<b>{{ key }}:</b>
+{{ value }}
+</p>
+
+{% endfor %}
+
+{% else %}
+
+{% for item in data %}
+
+<p>{{ item }}</p>
+
+{% endfor %}
+
+{% endif %}
+
+</div>
+
+</div>
+
+<!-- THREAT INVESTIGATION -->
+<div class="card">
+
+<h2>🚨 Threat Investigation</h2>
+
+<button onclick="showThreatDetails()">
+View Threat Details
+</button>
+
+<div id="threatDetails">
+
+<h3 class="severity-high">
+⚠ Suspicious Activity Detected
+</h3>
+
+<p>
+<b>Suspicious IP:</b>
+<span id="susIP">
+192.168.1.105
+</span>
+</p>
+
+<p>
+<b>Attack Type:</b>
+<span id="attackType">
+SQL Injection Attempt
+</span>
+</p>
+
+<p>
+<b>Threat Severity:</b>
+<span id="severityText"
+class="severity-high">
+HIGH
+</span>
+</p>
+
+<p>
+<b>Status:</b>
+Blocked by AI Security Engine
+</p>
+
+<p>
+<b>Recommendation:</b>
+Immediately blacklist the IP and inspect
+server logs carefully.
+</p>
+
+</div>
+
+</div>
+
+<!-- ANALYTICS -->
+<div class="grid">
+
+<div class="card">
+
+<h2>📈 Threat Activity</h2>
+
+<canvas id="threatChart"></canvas>
+
+</div>
+
+<div class="card">
+
+<h2>🚨 Alert Distribution</h2>
+
+<canvas id="alertChart"></canvas>
+
+</div>
+
+</div>
+
+<!-- MAP -->
+<div class="card">
+
+<h2>🌍 Attack Visualization</h2>
+
+<iframe
+width="100%"
+height="300"
+style="border:0"
+loading="lazy"
+allowfullscreen
+src="https://maps.google.com/maps?q={{ lat }},{{ lon }}&z=4&output=embed">
+</iframe>
+
+</div>
+
+<!-- BACK -->
+<div class="card">
+
+<a href="/dashboard">
+<button>
+⬅ Back To Dashboard
+</button>
+</a>
+
+</div>
+
+</div>
+
+<script>
+
+/* ================= AI THREAT ENGINE ================= */
+
+let alerts =
+{{ summary["Total Alerts"]|default(0) }};
+
+let level = "LOW";
+let color = "green";
+let percent = 20;
+
+let recommendation =
+"System operating normally.";
+
+if(alerts >= 2){
+
+level = "MEDIUM";
+color = "orange";
+percent = 55;
+
+recommendation =
+"Suspicious activity detected. Monitor traffic carefully.";
+
+}
+
+if(alerts >= 5){
+
+level = "HIGH";
+color = "red";
+percent = 85;
+
+recommendation =
+"Potential cyber attack detected. Immediate investigation recommended.";
+
+}
+
+if(alerts >= 8){
+
+level = "CRITICAL";
+color = "darkred";
+percent = 100;
+
+recommendation =
+"Critical threat detected. Activate incident response immediately.";
+
+}
+
+/* UPDATE UI */
+
+document.getElementById("riskLevel").innerHTML =
+"Threat Level: " + level;
+
+document.getElementById("riskLevel").style.color =
+color;
+
+document.getElementById("riskPercent").innerHTML =
+percent + "% Risk Score";
+
+document.getElementById("riskPercent").style.color =
+color;
+
+document.getElementById("riskBar").style.width =
+percent + "%";
+
+document.getElementById("riskBar").style.background =
+color;
+
+document.getElementById("recommendation").innerHTML =
+recommendation;
+
+/* ================= ALERT ================= */
+
+if(level == "HIGH" || level == "CRITICAL"){
+
+document.getElementById("alertBox").style.display =
+"block";
+
+setTimeout(()=>{
+
+document.getElementById("alertBox").style.display =
+"none";
+
+},3000);
+
+/* VOICE ALERT */
+
+let speech =
+new SpeechSynthesisUtterance(
+"Warning. Suspicious activity detected."
+);
+
+speech.rate = 1;
+
+window.speechSynthesis.speak(speech);
+
+}
+
+/* ================= THREAT DETAILS ================= */
+
+function showThreatDetails(){
+
+let panel =
+document.getElementById("threatDetails");
+
+if(panel.style.display=="none"){
+
+panel.style.display="block";
+
+let speech =
+new SpeechSynthesisUtterance(
+"Threat details displayed."
+);
+
+window.speechSynthesis.speak(speech);
+
+}else{
+
+panel.style.display="none";
+
+}
+
+}
+
+/* ================= CHARTS ================= */
+
+new Chart(
+document.getElementById("threatChart"),
+{
+type:"line",
+data:{
+labels:["1","2","3","4","5","6","7"],
+datasets:[{
+label:"Threat Activity",
+data:[2,4,3,7,5,8,6],
+borderColor:"#00ffcc",
+backgroundColor:"rgba(0,255,204,0.2)",
+tension:0.4
+}]
+},
+options:{
+plugins:{
+legend:{
+labels:{
+color:"#00ffcc"
+}
+}
+},
+scales:{
+x:{
+ticks:{
+color:"#00ffcc"
+}
+},
+y:{
+ticks:{
+color:"#00ffcc"
+}
+}
+}
+}
+}
+);
+
+new Chart(
+document.getElementById("alertChart"),
+{
+type:"doughnut",
+data:{
+labels:["Low","Medium","High"],
+datasets:[{
+data:[3,5,8],
+backgroundColor:[
+"green",
+"orange",
+"red"
+]
+}]
+},
+options:{
+plugins:{
+legend:{
+labels:{
+color:"#00ffcc"
+}
+}
+}
+}
+}
+);
+
+</script>
+
+</body>
+
+<div class="card">
+
+<a href="/download_report">
+
+<button>
+📂 Download Security Report
+</button>
+
+</a>
+
+</div>
+</html>

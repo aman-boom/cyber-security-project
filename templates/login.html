@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Cyber Secure Login</title>
+
+<style>
+body {
+    margin:0;
+    overflow:hidden;
+    font-family:monospace;
+    color:#00ffcc;
+    background:#020617;
+}
+
+/* MATRIX */
+canvas {
+    position:fixed;
+    top:0;
+    left:0;
+}
+
+/* CARD */
+.card {
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    background:rgba(0,0,0,0.88);
+    border:1px solid #00ffcc;
+    padding:30px;
+    width:360px;
+    z-index:2;
+    box-shadow:0 0 25px #00ffcc;
+    backdrop-filter:blur(8px);
+    animation:glow 2s infinite alternate;
+    border-radius:10px;
+}
+
+/* GLOW */
+@keyframes glow {
+    from { box-shadow:0 0 10px #00ffcc; }
+    to { box-shadow:0 0 30px #00ffcc; }
+}
+
+/* INPUT */
+input {
+    width:100%;
+    padding:10px;
+    margin-top:10px;
+    background:black;
+    color:#00ffcc;
+    border:1px solid #00ffcc;
+    outline:none;
+    border-radius:5px;
+}
+
+/* BUTTON */
+button {
+    width:100%;
+    padding:10px;
+    margin-top:15px;
+    background:#00ffcc;
+    color:black;
+    border:none;
+    cursor:pointer;
+    font-weight:bold;
+    border-radius:5px;
+    transition:0.3s;
+}
+
+button:hover {
+    background:#00ffaa;
+    transform:scale(1.03);
+}
+
+/* PASSWORD BAR */
+.strength-container{
+    width:100%;
+    background:#111;
+    height:10px;
+    margin-top:8px;
+    border-radius:5px;
+    overflow:hidden;
+}
+
+.strength-bar{
+    height:10px;
+    width:0%;
+    transition:0.4s;
+}
+
+/* PASSWORD TEXT */
+#strength {
+    margin-top:5px;
+    font-size:12px;
+}
+
+/* CAPTCHA */
+.captcha-box {
+    margin-top:12px;
+    padding:10px;
+    background:#111;
+    text-align:center;
+    border:1px dashed #00ffcc;
+    letter-spacing:3px;
+    border-radius:5px;
+}
+
+/* TERMINAL */
+#terminal {
+    background:#000;
+    color:#00ffcc;
+    padding:10px;
+    margin-bottom:15px;
+    font-size:12px;
+    height:70px;
+    overflow:hidden;
+    border:1px solid #00ffcc;
+    border-radius:5px;
+}
+
+/* ERROR */
+.error {
+    color:red;
+    margin-top:10px;
+    text-align:center;
+}
+
+/* LINK */
+.link {
+    margin-top:15px;
+    text-align:center;
+}
+
+.link a {
+    color:#00ffcc;
+    text-decoration:none;
+}
+
+.link a:hover {
+    text-decoration:underline;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="matrix"></canvas>
+
+<div class="card">
+
+<h2 id="typing" style="text-align:center;"></h2>
+
+<!-- TERMINAL -->
+<div id="terminal"></div>
+
+<form id="loginForm" method="POST">
+
+<input name="name" placeholder="Username" required>
+
+<input id="password" name="password" type="password"
+placeholder="Password"
+onkeyup="checkStrength()" required>
+
+<!-- PASSWORD BAR -->
+<div class="strength-container">
+<div class="strength-bar" id="strengthBar"></div>
+</div>
+
+<p id="strength"></p>
+
+<!-- CAPTCHA -->
+<div class="captcha-box">
+<span id="captcha"></span>
+</div>
+
+<input id="captchaInput" placeholder="Enter CAPTCHA" required>
+
+<button type="submit">Login</button>
+
+</form>
+
+<!-- SIGNUP -->
+<div class="link">
+New user? <a href="/signup">Create Account</a>
+</div>
+
+{% if error %}
+<p class="error">{{ error }}</p>
+{% endif %}
+
+</div>
+
+<script>
+
+/* MATRIX EFFECT */
+let canvas = document.getElementById("matrix");
+let ctx = canvas.getContext("2d");
+
+canvas.height = window.innerHeight;
+canvas.width = window.innerWidth;
+
+let letters = "01".split("");
+let fontSize = 14;
+let columns = canvas.width / fontSize;
+let drops = [];
+
+for(let x = 0; x < columns; x++) drops[x] = 1;
+
+function draw(){
+ctx.fillStyle = "rgba(0,0,0,0.05)";
+ctx.fillRect(0,0,canvas.width,canvas.height);
+
+ctx.fillStyle = "#0F0";
+ctx.font = fontSize + "px monospace";
+
+for(let i=0; i<drops.length; i++){
+
+let text = letters[Math.floor(Math.random()*letters.length)];
+
+ctx.fillText(text, i*fontSize, drops[i]*fontSize);
+
+if(drops[i]*fontSize > canvas.height && Math.random() > 0.975)
+drops[i] = 0;
+
+drops[i]++;
+}
+}
+setInterval(draw,33);
+
+/* TITLE TYPING */
+let text = "🔐 ACCESS SYSTEM";
+let i = 0;
+
+function type(){
+if(i < text.length){
+document.getElementById("typing").innerHTML += text.charAt(i);
+i++;
+setTimeout(type,80);
+}}
+type();
+
+/* TERMINAL */
+let lines = [
+"Initializing secure connection...",
+"Bypassing firewall...",
+"Decrypting credentials...",
+"Authenticating user...",
+"Access ready..."
+];
+
+let tIndex = 0;
+let cIndex = 0;
+
+let terminal = document.getElementById("terminal");
+
+let typingSound = new Audio("https://www.soundjay.com/mechanical/keyboard-1.mp3");
+
+function typeTerminal(){
+
+if(tIndex < lines.length){
+
+if(cIndex < lines[tIndex].length){
+
+terminal.innerHTML += lines[tIndex].charAt(cIndex);
+
+typingSound.currentTime = 0;
+typingSound.play().catch(()=>{});
+
+cIndex++;
+
+setTimeout(typeTerminal,30);
+
+}else{
+
+terminal.innerHTML += "<br>";
+
+tIndex++;
+cIndex = 0;
+
+setTimeout(typeTerminal,300);
+}
+}
+}
+
+typeTerminal();
+
+/* PASSWORD STRENGTH */
+function checkStrength(){
+
+let pass = document.getElementById("password").value;
+
+let s = document.getElementById("strength");
+let bar = document.getElementById("strengthBar");
+
+let score = 0;
+
+if(pass.length >= 8) score++;
+if(/[A-Z]/.test(pass)) score++;
+if(/[0-9]/.test(pass)) score++;
+if(/[@$!%*?&]/.test(pass)) score++;
+
+if(score <= 1){
+s.innerHTML = "Weak Password";
+s.style.color = "red";
+bar.style.width = "25%";
+bar.style.background = "red";
+}
+else if(score <= 3){
+s.innerHTML = "Medium Password";
+s.style.color = "orange";
+bar.style.width = "60%";
+bar.style.background = "orange";
+}
+else{
+s.innerHTML = "Strong Password";
+s.style.color = "lime";
+bar.style.width = "100%";
+bar.style.background = "lime";
+}
+}
+
+/* CAPTCHA */
+let captchaText = "";
+
+function generateCaptcha(){
+captchaText = Math.random().toString(36).substring(2,7);
+document.getElementById("captcha").innerText = captchaText;
+}
+
+generateCaptcha();
+
+/* SOUNDS */
+let successSound = new Audio("https://www.soundjay.com/button/beep-09.wav");
+let errorSound = new Audio("https://www.soundjay.com/button/beep-05.wav");
+
+/* LOGIN VALIDATION */
+document.getElementById("loginForm").addEventListener("submit", function(e){
+
+let input = document.getElementById("captchaInput").value;
+
+if(input !== captchaText){
+
+errorSound.play();
+
+alert("❌ CAPTCHA Incorrect");
+
+e.preventDefault();
+
+generateCaptcha();
+
+return;
+}
+
+successSound.play();
+
+});
+
+</script>
+
+</body>
+</html>

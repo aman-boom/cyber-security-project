@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Create Secure Account</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    font-family:monospace;
+    background:#020617;
+    color:#00ffcc;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+
+/* CARD */
+.card{
+    width:360px;
+    background:rgba(0,0,0,0.9);
+    border:1px solid #00ffcc;
+    padding:30px;
+    box-shadow:0 0 25px #00ffcc;
+    border-radius:10px;
+}
+
+/* INPUT */
+input{
+    width:100%;
+    padding:10px;
+    margin-top:12px;
+    background:black;
+    color:#00ffcc;
+    border:1px solid #00ffcc;
+    outline:none;
+}
+
+/* BUTTON */
+button{
+    width:100%;
+    padding:10px;
+    margin-top:15px;
+    background:#00ffcc;
+    color:black;
+    border:none;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#00ffaa;
+}
+
+/* PASSWORD BAR */
+.strength-container{
+    width:100%;
+    background:#111;
+    height:10px;
+    margin-top:8px;
+    border-radius:5px;
+}
+
+.strength-bar{
+    height:10px;
+    width:0%;
+    border-radius:5px;
+    transition:0.4s;
+}
+
+/* RULES */
+.rules{
+    font-size:12px;
+    margin-top:10px;
+}
+
+.valid{
+    color:lime;
+}
+
+.invalid{
+    color:red;
+}
+
+/* CAPTCHA */
+.captcha-box{
+    margin-top:15px;
+    padding:10px;
+    background:#111;
+    border:1px dashed #00ffcc;
+    text-align:center;
+    letter-spacing:3px;
+    font-size:18px;
+}
+
+.error{
+    color:red;
+    margin-top:10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+
+<h2 style="text-align:center;">🛡 CREATE ACCOUNT</h2>
+
+<form id="signupForm" method="POST">
+
+<input name="name" placeholder="Username" required>
+
+<input type="password" id="password" name="password"
+placeholder="Password" required onkeyup="checkPassword()">
+
+<!-- PASSWORD BAR -->
+<div class="strength-container">
+<div class="strength-bar" id="strengthBar"></div>
+</div>
+
+<p id="strengthText"></p>
+
+<!-- RULES -->
+<div class="rules">
+<p id="length" class="invalid">❌ Minimum 8 characters</p>
+<p id="upper" class="invalid">❌ At least 1 uppercase letter</p>
+<p id="number" class="invalid">❌ At least 1 number</p>
+<p id="special" class="invalid">❌ At least 1 special character</p>
+</div>
+
+<!-- CAPTCHA -->
+<div class="captcha-box">
+<span id="captcha"></span>
+</div>
+
+<input id="captchaInput" placeholder="Enter CAPTCHA" required>
+
+<button>Create Account</button>
+
+</form>
+
+{% if error %}
+<p class="error">{{ error }}</p>
+{% endif %}
+
+<p style="text-align:center;margin-top:10px;">
+<a href="/" style="color:#00ffcc;">⬅ Back to Login</a>
+</p>
+
+</div>
+
+<script>
+
+/* CAPTCHA */
+let captchaText="";
+
+function generateCaptcha(){
+captchaText=Math.random().toString(36).substring(2,7);
+document.getElementById("captcha").innerText=captchaText;
+}
+generateCaptcha();
+
+/* PASSWORD CHECK */
+function checkPassword(){
+
+let pass=document.getElementById("password").value;
+
+let bar=document.getElementById("strengthBar");
+let text=document.getElementById("strengthText");
+
+let score=0;
+
+/* RULES */
+if(pass.length>=8){
+document.getElementById("length").className="valid";
+score++;
+}else{
+document.getElementById("length").className="invalid";
+}
+
+if(/[A-Z]/.test(pass)){
+document.getElementById("upper").className="valid";
+score++;
+}else{
+document.getElementById("upper").className="invalid";
+}
+
+if(/[0-9]/.test(pass)){
+document.getElementById("number").className="valid";
+score++;
+}else{
+document.getElementById("number").className="invalid";
+}
+
+if(/[@$!%*?&]/.test(pass)){
+document.getElementById("special").className="valid";
+score++;
+}else{
+document.getElementById("special").className="invalid";
+}
+
+/* STRENGTH BAR */
+if(score==1){
+bar.style.width="25%";
+bar.style.background="red";
+text.innerHTML="Weak Password";
+text.style.color="red";
+}
+else if(score==2 || score==3){
+bar.style.width="60%";
+bar.style.background="orange";
+text.innerHTML="Medium Password";
+text.style.color="orange";
+}
+else if(score==4){
+bar.style.width="100%";
+bar.style.background="lime";
+text.innerHTML="Strong Password";
+text.style.color="lime";
+}
+}
+
+/* FORM VALIDATION */
+document.getElementById("signupForm").addEventListener("submit",function(e){
+
+let input=document.getElementById("captchaInput").value;
+
+if(input!==captchaText){
+alert("❌ CAPTCHA Incorrect");
+e.preventDefault();
+generateCaptcha();
+return;
+}
+
+});
+
+</script>
+
+</body>
+</html>
